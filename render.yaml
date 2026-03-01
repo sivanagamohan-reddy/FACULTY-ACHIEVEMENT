@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: faculty-tracker-pro-web
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run auth:init && npm run db:init && npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: CORS_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PGSSLMODE
+        value: require
+      - key: PGSSL_REJECT_UNAUTHORIZED
+        value: "false"
