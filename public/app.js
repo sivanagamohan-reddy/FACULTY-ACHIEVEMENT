@@ -403,6 +403,10 @@ function bindMobileActionNav(user, showAdminActions) {
     closeNav();
     document.getElementById('btn-remove-user')?.click();
   });
+  document.getElementById('m-nav-search')?.addEventListener('click', () => {
+    closeNav();
+    location.hash = '#search';
+  });
   document.getElementById('m-nav-profile')?.addEventListener('click', async () => {
     closeNav();
     await openProfileModal(user);
@@ -1330,7 +1334,3 @@ function escapeHtml(str) {
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
 }
-  document.getElementById('m-nav-search')?.addEventListener('click', () => {
-    closeNav();
-    location.hash = '#search';
-  });
