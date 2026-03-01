@@ -1,13 +1,5 @@
 import { apiGet, apiPost, apiPut, setAuthState, clearAuthState, getAuthState } from './services/api.js';
 import { renderLoginPage } from './auth/loginPage.js';
-import { renderFacultyDashboard } from './faculty-dashboard/facultyDashboardPage.js';
-import { renderPublicationPage } from './faculty-dashboard/pages/publicationPage.js';
-import { renderFdpPage } from './faculty-dashboard/pages/fdpPage.js';
-import { renderConferencePage } from './faculty-dashboard/pages/conferencePage.js';
-import { renderWorkshopPage } from './faculty-dashboard/pages/workshopPage.js';
-import { renderPatentPage } from './faculty-dashboard/pages/patentPage.js';
-import { renderHodDashboard } from './hod-dashboard/hodDashboardPage.js';
-import { renderPrincipalDashboard } from './principal-dashboard/principalDashboardPage.js';
 
 const app = document.getElementById('app');
 const headerBack = document.getElementById('header-back');
@@ -21,16 +13,17 @@ const FALLBACK_DEPARTMENTS = ['CSE', 'CSE(DS)', 'CSE(AI)', 'ECE', 'EEE', 'MECH',
 let adminModalHost = null;
 let metaOptionsCache = null;
 let appBootstrapped = false;
+const moduleCache = {};
 
 const routes = {
   login: { role: 'public', render: showLogin },
   'faculty-dashboard': { role: 'faculty', render: showFacultyDashboard },
   'achievement-list': { role: 'auth', render: showAchievementList },
-  publication: { role: 'faculty', render: () => renderPublicationPage(app) },
-  fdp: { role: 'faculty', render: () => renderFdpPage(app) },
-  conference: { role: 'faculty', render: () => renderConferencePage(app) },
-  workshop: { role: 'faculty', render: () => renderWorkshopPage(app) },
-  patent: { role: 'faculty', render: () => renderPatentPage(app) },
+  publication: { role: 'faculty', render: showPublicationPage },
+  fdp: { role: 'faculty', render: showFdpPage },
+  conference: { role: 'faculty', render: showConferencePage },
+  workshop: { role: 'faculty', render: showWorkshopPage },
+  patent: { role: 'faculty', render: showPatentPage },
   reports: { role: 'faculty', render: () => showInfo('Reports & Analytics') },
   search: { role: 'auth', render: () => showInfo('Global Search') },
   ai: { role: 'faculty', render: () => showInfo('AI Assistant') },
@@ -930,6 +923,10 @@ function showLogin() {
 }
 
 async function showFacultyDashboard() {
+  const { renderFacultyDashboard } = await getModule(
+    'facultyDashboard',
+    () => import('./faculty-dashboard/facultyDashboardPage.js')
+  );
   const options = await getMetaOptions();
   const selectedAcademicYear = getSavedDashboardFilter('faculty_academic_year') || options.default_academic_year;
   const data = await apiGet(`/api/faculty-dashboard/summary?academic_year=${encodeURIComponent(selectedAcademicYear)}`);
@@ -943,7 +940,51 @@ async function showFacultyDashboard() {
   bindFacultyDashboardFilters();
 }
 
+async function showPublicationPage() {
+  const { renderPublicationPage } = await getModule(
+    'publicationPage',
+    () => import('./faculty-dashboard/pages/publicationPage.js')
+  );
+  return renderPublicationPage(app);
+}
+
+async function showFdpPage() {
+  const { renderFdpPage } = await getModule(
+    'fdpPage',
+    () => import('./faculty-dashboard/pages/fdpPage.js')
+  );
+  return renderFdpPage(app);
+}
+
+async function showConferencePage() {
+  const { renderConferencePage } = await getModule(
+    'conferencePage',
+    () => import('./faculty-dashboard/pages/conferencePage.js')
+  );
+  return renderConferencePage(app);
+}
+
+async function showWorkshopPage() {
+  const { renderWorkshopPage } = await getModule(
+    'workshopPage',
+    () => import('./faculty-dashboard/pages/workshopPage.js')
+  );
+  return renderWorkshopPage(app);
+}
+
+async function showPatentPage() {
+  const { renderPatentPage } = await getModule(
+    'patentPage',
+    () => import('./faculty-dashboard/pages/patentPage.js')
+  );
+  return renderPatentPage(app);
+}
+
 async function showHodDashboard() {
+  const { renderHodDashboard } = await getModule(
+    'hodDashboard',
+    () => import('./hod-dashboard/hodDashboardPage.js')
+  );
   const options = await getMetaOptions();
   const selectedAcademicYear = getSavedDashboardFilter('hod_academic_year') || options.default_academic_year;
   const data = await apiGet(`/api/hod-dashboard/summary?academic_year=${encodeURIComponent(selectedAcademicYear)}`);
@@ -959,6 +1000,10 @@ async function showHodDashboard() {
 }
 
 async function showPrincipalDashboard() {
+  const { renderPrincipalDashboard } = await getModule(
+    'principalDashboard',
+    () => import('./principal-dashboard/principalDashboardPage.js')
+  );
   const options = await getMetaOptions();
   const selectedAcademicYear = getSavedDashboardFilter('principal_academic_year') || options.default_academic_year;
   const selectedDepartment = getSavedDashboardFilter('principal_department') || options.default_department || 'CSE(DS)';
@@ -1333,4 +1378,11 @@ function escapeHtml(str) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
+}
+
+async function getModule(cacheKey, importer) {
+  if (!moduleCache[cacheKey]) {
+    moduleCache[cacheKey] = importer();
+  }
+  return moduleCache[cacheKey];
 }
