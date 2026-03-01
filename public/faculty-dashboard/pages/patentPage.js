@@ -8,13 +8,13 @@ export function renderPatentPage(app) {
         <div class="row g-4">
           <div class="col-12"><label class="form-label">Patent Title *</label><input name="title" class="form-control pub-input" required /></div>
           <div class="col-12 col-lg-6"><label class="form-label">Application Number *</label><input name="application_number" class="form-control pub-input" required placeholder="e.g., 202141012345" /></div>
-          <div class="col-12 col-lg-6"><label class="form-label">Filing Date</label><input name="event_date" type="date" class="form-control pub-input" /></div>
+          <div class="col-12 col-lg-6"><label class="form-label">Filing Date *</label><input name="event_date" type="date" class="form-control pub-input" required /></div>
           <div class="col-12 col-lg-6"><label class="form-label">Inventors</label><input name="inventors" class="form-control pub-input" placeholder="Names of all inventors" /></div>
-          <div class="col-12 col-lg-6"><label class="form-label">Patent Office</label><select name="office" class="form-select pub-input"><option>Select office</option><option>Indian Patent Office</option><option>USPTO</option><option>EPO</option></select></div>
+          <div class="col-12 col-lg-6"><label class="form-label">Patent Office</label><select name="office" class="form-select pub-input"><option value="" selected>Select office</option><option>Indian Patent Office</option><option>USPTO</option><option>EPO</option></select></div>
           <div class="col-12 col-lg-6"><label class="form-label">Status</label><select name="status" class="form-select pub-input"><option>Filed</option><option>Published</option><option>Examined</option><option>Granted</option></select></div>
           <div class="col-12 col-lg-6"><label class="form-label">Grant Date (if granted)</label><input name="grant_date" type="date" class="form-control pub-input" /></div>
           <div class="col-12"><label class="form-label">Abstract</label><textarea name="abstract" class="form-control pub-input" rows="3"></textarea></div>
-          <div class="col-12"><label class="form-label">Upload Certificate/Proof</label><input id="patent-attachment" type="file" class="form-control mb-2" accept=".jpg,.jpeg,.png,.webp,.pdf" /><div class="upload-zone pat-upload"><div class="text-center"><i class="bi bi-cloud-arrow-up" style="font-size:4rem;color:#66BB6A"></i><div class="fw-bold mt-2 fs-4" style="color:#64748b">Upload image or PDF (max 10MB)</div></div></div></div>
+          <div class="col-12"><label class="form-label">Upload Certificate/Proof</label><input id="patent-attachment" type="file" class="form-control mb-2" accept=".jpg,.jpeg,.png,.webp,.pdf" /><div class="form-text mb-2">Optional. JPG/PNG/WEBP/PDF up to 10MB.</div><div class="upload-zone pat-upload"><div class="text-center"><i class="bi bi-cloud-arrow-up" style="font-size:4rem;color:#66BB6A"></i><div class="fw-bold mt-2 fs-4" style="color:#64748b">Upload image or PDF (max 10MB)</div></div></div></div>
         </div>
         <div class="d-flex flex-column flex-md-row justify-content-end gap-3 mt-4"><button class="pub-btn pub-btn-secondary" type="button" onclick="location.hash='#faculty-dashboard'">Cancel</button><button class="pub-btn pat-btn-primary" type="submit">Save Patent</button></div>
       </form>
