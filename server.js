@@ -253,6 +253,57 @@ async function queryDb(sql, params = []) {
   return pool.query(sql, params);
 }
 
+async function initializeDatabaseSchema() {
+  if (!pool) {
+    useMemoryStore = true;
+    console.warn('Database pool is not configured. Starting server with in-memory fallback.');
+    return;
+  }
+
+  try {
+    await queryDb(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
+
+    await queryDb(`
+      CREATE TABLE IF NOT EXISTS app_users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        username VARCHAR(80) UNIQUE NOT NULL,
+        email VARCHAR(160) UNIQUE NOT NULL,
+        full_name VARCHAR(160) NOT NULL,
+        role VARCHAR(20) NOT NULL,
+        department VARCHAR(120),
+        password_hash TEXT NOT NULL,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await queryDb(`
+      CREATE TABLE IF NOT EXISTS achievements (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        type VARCHAR(50) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        event_date DATE NOT NULL,
+        details JSONB,
+        user_id UUID,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    authSchemaEnhanced = true;
+    achievementsSchemaEnhanced = true;
+    achievementsUserIdSupported = true;
+    useMemoryStore = false;
+    console.log('Database schema initialization completed.');
+  } catch (error) {
+    if (fallbackToMemory(error)) {
+      console.warn('Database schema initialization failed. Continuing with in-memory fallback.');
+      return;
+    }
+    console.error('Database schema initialization error:', error.message);
+    throw error;
+  }
+}
+
 async function ensureAuthSchemaEnhancements() {
   if (authSchemaEnhanced || !pool) return;
   try {
@@ -1184,6 +1235,14 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ message: 'Internal server error' });
 });
 
-app.listen(port, () => {
-  console.log(`Faculty Tracker running on http://localhost:${port}`);
+async function startServer() {
+  await initializeDatabaseSchema();
+  app.listen(port, () => {
+    console.log(`Faculty Tracker running on http://localhost:${port}`);
+  });
+}
+
+startServer().catch((error) => {
+  console.error('Startup failed:', error);
+  process.exit(1);
 });
