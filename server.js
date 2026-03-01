@@ -23,7 +23,10 @@ const configuredCorsOrigins = String(process.env.CORS_ORIGIN || '')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
-const allowedOrigins = new Set(configuredCorsOrigins.length ? configuredCorsOrigins : [`http://localhost:${port}`]);
+const renderExternalUrl = String(process.env.RENDER_EXTERNAL_URL || '').trim().replace(/\/+$/, '');
+const fallbackOrigins = [`http://localhost:${port}`];
+if (renderExternalUrl) fallbackOrigins.push(renderExternalUrl);
+const allowedOrigins = new Set(configuredCorsOrigins.length ? configuredCorsOrigins : fallbackOrigins);
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
@@ -38,7 +41,9 @@ app.use(
   cors({
     origin(origin, callback) {
       if (!origin || allowedOrigins.has(origin)) return callback(null, true);
-      return callback(new Error('Not allowed by CORS'));
+      // Do not throw for non-allowed origins. Returning false omits CORS headers
+      // while still allowing same-origin/static requests to proceed safely.
+      return callback(null, false);
     },
     credentials: true,
   })
