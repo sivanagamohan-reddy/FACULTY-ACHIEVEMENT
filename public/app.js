@@ -20,6 +20,7 @@ const LAST_LOGOUT_AT_KEY = 'faculty_tracker_last_logout_at';
 const FALLBACK_DEPARTMENTS = ['CSE', 'CSE(DS)', 'CSE(AI)', 'ECE', 'EEE', 'MECH', 'CIVIL', 'IT', 'MBA'];
 let adminModalHost = null;
 let metaOptionsCache = null;
+let appBootstrapped = false;
 
 const routes = {
   login: { role: 'public', render: showLogin },
@@ -38,7 +39,18 @@ const routes = {
 };
 
 window.addEventListener('hashchange', renderRoute);
-window.addEventListener('DOMContentLoaded', bootstrap);
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', bootstrap, { once: true });
+} else {
+  bootstrap();
+}
+window.addEventListener('error', (event) => {
+  showFatalStartupError(event?.error?.message || event?.message || 'Unexpected startup error');
+});
+window.addEventListener('unhandledrejection', (event) => {
+  const msg = String(event?.reason?.message || event?.reason || 'Unexpected promise rejection');
+  showFatalStartupError(msg);
+});
 headerBack?.addEventListener('click', () => {
   const auth = getAuthState();
   if (!auth?.user) {
@@ -64,8 +76,23 @@ headerMenu?.addEventListener('click', () => {
 });
 
 async function bootstrap() {
+  if (appBootstrapped) return;
+  appBootstrapped = true;
   await fetchSession();
   await renderRoute();
+}
+
+function showFatalStartupError(message) {
+  if (!app || app.innerHTML?.trim()) return;
+  app.innerHTML = `
+    <section class="py-4">
+      <div class="white-card border border-danger-subtle">
+        <h5 class="text-danger fw-bold mb-2">Application failed to start</h5>
+        <p class="subtle mb-3">${escapeHtml(String(message || 'Unknown error'))}</p>
+        <button class="btn btn-outline-primary" onclick="location.reload()">Reload</button>
+      </div>
+    </section>
+  `;
 }
 
 async function fetchSession() {
