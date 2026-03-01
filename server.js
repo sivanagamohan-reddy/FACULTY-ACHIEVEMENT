@@ -1223,6 +1223,49 @@ app.post('/api/achievements', authRequired, roleRequired('faculty'), asyncHandle
   }
 }));
 
+app.get('/api/setup-principal', asyncHandler(async (_req, res) => {
+  if (String(process.env.ALLOW_SETUP || '').toLowerCase() !== 'true') {
+    return res.status(403).json({ message: 'Setup is disabled' });
+  }
+
+  await ensureAuthSchemaEnhancements();
+
+  const { rows: existing } = await queryDb(
+    `SELECT id FROM app_users WHERE role = 'principal' LIMIT 1`
+  );
+  if (existing.length) {
+    return res.json({ message: 'Principal already exists' });
+  }
+
+  const username = 'principal';
+  const email = 'principal@college.com';
+  const fullName = 'Principal Admin';
+  const role = 'principal';
+  const department = 'CSE(DS)';
+  const plainPassword = 'Admin@123';
+  const passwordHash = await bcrypt.hash(plainPassword, 12);
+
+  await queryDb(
+    `INSERT INTO app_users (username, email, full_name, role, department, password_hash, is_active)
+     VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+     ON CONFLICT (username) DO NOTHING`,
+    [username, email, fullName, role, department, passwordHash]
+  );
+
+  const { rows: verify } = await queryDb(
+    `SELECT id FROM app_users WHERE username = $1 AND role = 'principal' LIMIT 1`,
+    [username]
+  );
+  if (!verify.length) {
+    return res.json({ message: 'Principal already exists' });
+  }
+
+  return res.json({
+    message: 'Principal created successfully',
+    login: { username, password: plainPassword },
+  });
+}));
+
 app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
